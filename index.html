@@ -34,12 +34,407 @@
 
   <h2>Program 1: Student Registration</h2>
   <pre>
-Paste your first Flutter program here.
+
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MaterialApp(
+    home: RegisterPage(),
+  ));
+}
+
+class RegisterPage extends StatefulWidget {
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final name = TextEditingController();
+  final email = TextEditingController();
+  final phone = TextEditingController();
+  final password = TextEditingController();
+
+  String dept = 'BCA';
+  String gender = 'Male';
+  bool terms = false;
+  bool hide = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Student Registration')
+      ),
+
+
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+
+        child: Column(
+          children: [
+            Icon(Icons.school, size: 60, color: Colors.blue),
+            Text('Welcome',
+                style: TextStyle(fontSize: 25)),
+
+            TextField(
+              controller: name,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+
+            TextField(
+              controller: email,
+              decoration: InputDecoration(labelText: 'Email'),
+            ),
+
+            TextField(
+              controller: phone,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(labelText: 'Phone'),
+            ),
+
+            TextField(
+              controller: password,
+              obscureText: hide,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.visibility),
+                  onPressed: () {
+                    setState(() {
+                      hide = !hide;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            DropdownButton<String>(
+              value: dept,
+              items: ['BCA', 'BSc', 'BCom', 'MCA']
+                  .map((d) => DropdownMenuItem(
+                value: d,
+                child: Text(d),
+              ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  dept = value!;
+                });
+              },
+            ),
+
+            Row(
+              children: [
+                Text('Gender:'),
+                Radio(
+                  value: 'Male',
+                  groupValue: gender,
+                  onChanged: (value) {
+                    setState(() {
+                      gender = value.toString();
+                    });
+                  },
+                ),
+                Text('Male'),
+                Radio(
+                  value: 'Female',
+                  groupValue: gender,
+                  onChanged: (value) {
+                    setState(() {
+                      gender = value.toString();
+                    });
+                  },
+                ),
+                Text('Female'),
+              ],
+            ),
+
+            CheckboxListTile(
+              title: Text('Accept Terms & Conditions'),
+              value: terms,
+              onChanged: (value) {
+                setState(() {
+                  terms = value!;
+                });
+              },
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                if (name.text.isEmpty ||
+                    email.text.isEmpty ||
+                    phone.text.isEmpty ||
+                    password.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Fill all fields')),
+                  );
+                } else if (phone.text.length != 10) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Enter 10 digit phone')),
+                  );
+                } else if (password.text.length < 6) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Password minimum 6')),
+                  );
+                } else if (!terms) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Accept terms')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Registration Successful')),
+                  );
+                }
+              },
+              child: Text('Register'),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                name.clear();
+                email.clear();
+                phone.clear();
+                password.clear();
+              },
+              child: Text('Reset'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
   </pre>
 
   <h2>Program 2: Employee Database CRUD</h2>
   <pre>
-Paste your second Flutter program here.
+import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+void main()
+{
+  runApp(MaterialApp(home: EmployeeApp()));
+}
+class EmployeeApp extends StatefulWidget {
+  @override
+  _EmployeeAppState createState() => _EmployeeAppState();
+}
+
+
+class _EmployeeAppState extends State<EmployeeApp> {
+  Database? db;
+  List<Map<String, dynamic>> employees = [];
+
+
+
+
+  final nameController = TextEditingController();
+  final deptController = TextEditingController();
+  final salaryController = TextEditingController();
+
+
+
+
+  bool isEditing = false;
+  int? editingId;
+
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    openDB();
+  }
+
+
+
+
+
+
+  Future<void> openDB() async {
+    db = await openDatabase(
+      join(await getDatabasesPath(), 'employee.db'),
+      version: 1,
+      onCreate: (db, version) {
+        return db.execute('''
+        CREATE TABLE employees (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          department TEXT,
+          salary REAL
+        )
+      ''');
+      },
+    );
+    loadEmployees();
+  }
+
+
+
+
+  Future<void> loadEmployees() async {
+    final data = await db!.query('employees');
+    setState(() {
+      employees = data;
+    });
+  }
+
+
+
+
+  Future<void> insertEmployee() async {
+    if (nameController.text.isEmpty ||
+        deptController.text.isEmpty ||
+        salaryController.text.isEmpty)
+      return;
+
+
+
+
+    await db!.insert('employees', {
+      'name': nameController.text,
+      'department': deptController.text,
+      'salary': double.tryParse(salaryController.text) ?? 0.0,
+    });
+
+
+    clearFields();
+    loadEmployees();
+  }
+
+
+
+
+  Future<void> updateEmployee() async {
+    if (editingId == null) return;
+
+
+
+
+    await db!.update(
+      'employees',
+      {
+        'name': nameController.text,
+        'department': deptController.text,
+        'salary': double.tryParse(salaryController.text) ?? 0.0,
+      },
+      where: 'id = ?',
+      whereArgs: [editingId],
+    );
+
+
+
+
+    clearFields();
+    loadEmployees();
+  }
+
+
+
+
+  Future<void> deleteEmployee(int id) async {
+    await db!.delete('employees', where: 'id = ?', whereArgs: [id]);
+    loadEmployees();
+  }
+
+
+
+
+  void clearFields() {
+    nameController.clear();
+    deptController.clear();
+    salaryController.clear();
+    setState(() {
+      isEditing = false;
+      editingId = null;
+    });
+  }
+
+
+
+
+  void startEditing(Map<String, dynamic> emp) {
+    setState(() {
+      isEditing = true;
+      editingId = emp['id'];
+      nameController.text = emp['name'];
+      deptController.text = emp['department'];
+      salaryController.text = emp['salary'].toString();
+    });
+  }
+
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Employee DB')),
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: deptController,
+              decoration: InputDecoration(labelText: 'Department'),
+            ),
+            TextField(
+              controller: salaryController,
+              decoration: InputDecoration(labelText: 'Salary'),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 10),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: isEditing ? updateEmployee : insertEmployee,
+                  child: Text(isEditing ? "Update Employee" : "Add Employee"),
+                ),
+                SizedBox(width: 10),
+                if (isEditing)
+                  OutlinedButton(onPressed: clearFields, child: Text("Cancel")),
+              ],
+            ),
+            Divider(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: employees.length,
+                itemBuilder: (context, index) {
+                  final emp = employees[index];
+                  return ListTile(
+                    title: Text('${emp['name']} (${emp['department']})'),
+                    subtitle: Text(
+                      'Salary: \$${emp['salary'].toStringAsFixed(2)}',
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => startEditing(emp),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => deleteEmployee(emp['id']),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
   </pre>
 </body>
 </html>
